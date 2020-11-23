@@ -1,9 +1,9 @@
 use instruction::Opcode;
 
 pub struct VM {
-    registers: [i32; 32],
+    pub registers: [i32; 32],
     pc: usize,
-    program: Vec<u8>,
+    pub program: Vec<u8>,
     remainder: u32,
     equal_flag: bool,
 }
@@ -17,6 +17,10 @@ impl VM {
             remainder: 0,
             equal_flag: false,
         }
+    }
+
+    pub fn add_byte(&mut self, b: u8) {
+        self.program.push(b)
     }
 
     pub fn run(&mut self) {
