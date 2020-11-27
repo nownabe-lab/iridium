@@ -1,7 +1,6 @@
 use std;
 use std::io;
 use std::io::Write;
-use nom::types::CompleteStr;
 use vm::VM;
 use assembler::program_parsers::program;
 
@@ -52,16 +51,14 @@ impl REPL {
                     std::process::exit(0);
                 },
                 _ => {
-                    let parsed_program = program(CompleteStr(buffer));
-                    if !parsed_program.is_ok() {
-                        println!("Unable to parse input");
-                        continue;
-                    }
-                    let (_, result) = parsed_program.unwrap();
-                    let bytecode = result.to_bytes();
-                    for byte in bytecode {
-                        self.vm.add_byte(byte);
-                    }
+                    let program = match program(buffer.into()) {
+                        Ok((_, program)) => program,
+                        Err(_) => {
+                            println!("Unable to parse input");
+                            continue;
+                        }
+                    };
+                    self.vm.program.append(&mut program.to_bytes());
                     self.vm.run_once();
                 }
             }
