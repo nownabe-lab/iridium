@@ -1,6 +1,7 @@
+use nom::multispace;
 use nom::types::CompleteStr;
 use assembler::Token;
-use assembler::opcode_parsers::opcode_load;
+use assembler::opcode_parsers::opcode;
 use assembler::operand_parsers::integer_operand;
 use assembler::register_parsers::register;
 
@@ -12,9 +13,36 @@ pub struct AssemblerInstruction {
     operand3: Option<Token>,
 }
 
-named!(pub instruction_one<CompleteStr, AssemblerInstruction>,
+named!(pub instruction<CompleteStr, AssemblerInstruction>,
     do_parse!(
-        o: opcode_load >>
+        ins: alt!(
+            instruction_two |
+            instruction_one
+        ) >>
+        (
+            ins
+        )
+    )
+);
+
+named!(instruction_one<CompleteStr, AssemblerInstruction>,
+    do_parse!(
+        o: opcode >>
+        opt!(multispace) >>
+        (
+            AssemblerInstruction{
+                opcode: o,
+                operand1: None,
+                operand2: None,
+                operand3: None,
+            }
+        )
+    )
+);
+
+named!(instruction_two<CompleteStr, AssemblerInstruction>,
+    do_parse!(
+        o: opcode >>
         r: register >>
         i: integer_operand >>
         (
@@ -96,7 +124,24 @@ mod tests {
 
     #[test]
     fn test_parse_instruction_from_one() {
-        let result = instruction_one(CompleteStr("load $0 #100\n"));
+        let result = instruction_one(CompleteStr("hlt\n"));
+        assert_eq!(
+            result,
+            Ok((
+                CompleteStr(""),
+                AssemblerInstruction {
+                    opcode: Token::Op { code: Opcode::HLT },
+                    operand1: None,
+                    operand2: None,
+                    operand3: None,
+                }
+            ))
+        );
+    }
+
+    #[test]
+    fn test_parse_instruction_from_two() {
+        let result = instruction_two(CompleteStr("load $0 #100\n"));
         assert_eq!(
             result,
             Ok((

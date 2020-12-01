@@ -1,3 +1,5 @@
+use nom::types::CompleteStr;
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Opcode {
     LOAD, // 0
@@ -67,6 +69,38 @@ impl From<Opcode> for u8 {
     }
 }
 
+impl<'a> From<CompleteStr<'a>> for Opcode {
+    fn from(v: CompleteStr<'a>) -> Self {
+        match v {
+            CompleteStr(op) => op.into(),
+        }
+    }
+}
+
+impl<'a> From<&'a str> for Opcode {
+    fn from(v: &'a str) -> Self {
+        match v {
+            "load" => Opcode::LOAD,
+            "add" => Opcode::ADD,
+            "sub" => return Opcode::SUB,
+            "mul" => return Opcode::MUL,
+            "div" => return Opcode::DIV,
+            "hlt" => return Opcode::HLT,
+            "jmp" => return Opcode::JMP,
+            "jmpf" => return Opcode::JMPF,
+            "jmpb" => return Opcode::JMPB,
+            "eq" => return Opcode::EQ,
+            "neq" => return Opcode::NEQ,
+            "gt" => return Opcode::GT,
+            "lt" => return Opcode::LT,
+            "gte" => return Opcode::GTE,
+            "lte" => return Opcode::LTE,
+            "jmpe" => return Opcode::JMPE,
+            _ => return Opcode::IGL
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub struct Instruction {
     opcode: Opcode
@@ -94,5 +128,13 @@ mod tests {
     fn test_create_instruction() {
         let instruction = Instruction::new(Opcode::HLT);
         assert_eq!(instruction.opcode, Opcode::HLT);
+    }
+
+    #[test]
+    fn test_str_to_opcode() {
+        let opcode = Opcode::from(CompleteStr("load"));
+        assert_eq!(opcode, Opcode::LOAD);
+        let opcode = Opcode::from(CompleteStr("illegal"));
+        assert_eq!(opcode, Opcode::IGL);
     }
 }
