@@ -4,6 +4,7 @@ pub struct VM {
     pub registers: [i32; 32],
     pc: usize,
     pub program: Vec<u8>,
+    heap: Vec<u8>,
     remainder: u32,
     equal_flag: bool,
 }
@@ -13,6 +14,7 @@ impl VM {
         VM {
             registers: [0; 32],
             program: vec![],
+            heap: vec![],
             pc: 0,
             remainder: 0,
             equal_flag: false,
@@ -125,6 +127,11 @@ impl VM {
                     self.next_8_bits();
                     self.next_16_bits();
                 }
+            },
+            Opcode::ALOC => {
+                let bytes = self.registers[self.next_8_bits() as usize];
+                let new_end = self.heap.len() as i32 + bytes;
+                self.heap.resize(new_end as usize, 0);
             },
             Opcode::IGL => {
                 println!("Unrecognized opcode found! Terminating!");
@@ -412,6 +419,17 @@ mod tests {
         vm.registers[0] = 0;
         vm.run_once();
         assert_eq!(vm.pc, 4);
+    }
+
+    #[test]
+    fn test_aloc_opcode() {
+        let op = 17;
+
+        let mut vm = VM::new();
+        vm.registers[0] = 1024;
+        vm.program = vec![op, 0, 0, 0];
+        vm.run_once();
+        assert_eq!(vm.heap.len(), 1024);
     }
 
     #[test]
