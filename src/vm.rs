@@ -132,6 +132,7 @@ impl VM {
                 let bytes = self.registers[self.next_8_bits() as usize];
                 let new_end = self.heap.len() as i32 + bytes;
                 self.heap.resize(new_end as usize, 0);
+                self.next_16_bits();
             },
             Opcode::INC => {
                 self.registers[self.next_8_bits() as usize] += 1;
@@ -438,6 +439,7 @@ mod tests {
         vm.program = vec![op, 0, 0, 0];
         vm.run_once();
         assert_eq!(vm.heap.len(), 1024);
+        assert_eq!(vm.pc, 4);
     }
 
     #[test]
