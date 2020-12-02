@@ -92,6 +92,10 @@ impl AssemblerInstruction {
             }
         }
 
+        while results.len() < 4 {
+            results.push(0);
+        }
+
         return results;
     }
 
@@ -154,6 +158,18 @@ mod tests {
                 }
             ))
         );
+    }
+
+    #[test]
+    fn test_to_bytes() {
+        let instruction = AssemblerInstruction {
+            opcode: Token::Op { code: Opcode::HLT },
+            operand1: None,
+            operand2: None,
+            operand3: None,
+        };
+        let result = instruction.to_bytes();
+        assert_eq!(result.len(), 4)
     }
 }
 

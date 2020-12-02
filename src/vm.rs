@@ -38,7 +38,7 @@ impl VM {
 
     pub fn execute_instruction(&mut self) -> bool {
         if self.pc >= self.program.len() {
-            return false;
+            return true;
         }
         match self.decode_opcode() {
             Opcode::LOAD => {
@@ -69,7 +69,7 @@ impl VM {
             },
             Opcode::HLT => {
                 println!("HLT encountered");
-                return false;
+                return true;
             },
             Opcode::JMP => {
                 let target = self.registers[self.next_8_bits() as usize];
@@ -133,12 +133,20 @@ impl VM {
                 let new_end = self.heap.len() as i32 + bytes;
                 self.heap.resize(new_end as usize, 0);
             },
+            Opcode::INC => {
+                self.registers[self.next_8_bits() as usize] += 1;
+                self.next_16_bits();
+            },
+            Opcode::DEC => {
+                self.registers[self.next_8_bits() as usize] -= 1;
+                self.next_16_bits();
+            },
             Opcode::IGL => {
                 println!("Unrecognized opcode found! Terminating!");
-                return false;
+                return true;
             }
         }
-        true
+        false
     }
 
     fn decode_opcode(&mut self) -> Opcode {
@@ -430,6 +438,30 @@ mod tests {
         vm.program = vec![op, 0, 0, 0];
         vm.run_once();
         assert_eq!(vm.heap.len(), 1024);
+    }
+
+    #[test]
+    fn test_inc_opcode() {
+        let op = 18;
+
+        let mut vm = VM::new();
+        vm.registers[0] = 3;
+        vm.program = vec![op, 0, 0, 0];
+        vm.run_once();
+        assert_eq!(vm.registers[0], 4);
+        assert_eq!(vm.pc, 4);
+    }
+
+    #[test]
+    fn test_dec_opcode() {
+        let op = 19;
+
+        let mut vm = VM::new();
+        vm.registers[0] = 3;
+        vm.program = vec![op, 0, 0, 0];
+        vm.run_once();
+        assert_eq!(vm.registers[0], 2);
+        assert_eq!(vm.pc, 4);
     }
 
     #[test]

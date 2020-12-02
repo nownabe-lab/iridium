@@ -20,6 +20,8 @@ pub enum Opcode {
     JMPE, // 15
     // NOP,
     ALOC,
+    INC,
+    DEC,
     IGL,
 }
 
@@ -43,6 +45,8 @@ impl From<u8> for Opcode {
             14 => return Opcode::LTE,
             15 => return Opcode::JMPE,
             17 => return Opcode::ALOC,
+            18 => return Opcode::INC,
+            19 => return Opcode::DEC,
             _ => return Opcode::IGL
         }
     }
@@ -68,6 +72,8 @@ impl From<Opcode> for u8 {
             Opcode::LTE => 14,
             Opcode::JMPE => 15,
             Opcode::ALOC => 17,
+            Opcode::INC => 18,
+            Opcode::DEC => 19,
             Opcode::IGL => 100,
         }
     }
@@ -101,6 +107,8 @@ impl<'a> From<&'a str> for Opcode {
             "lte" => return Opcode::LTE,
             "jmpe" => return Opcode::JMPE,
             "aloc" => return Opcode::ALOC,
+            "inc" => return Opcode::INC,
+            "dec" => return Opcode::DEC,
             _ => return Opcode::IGL
         }
     }
