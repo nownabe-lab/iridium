@@ -1,7 +1,11 @@
 use std;
+use std::fs::File;
 use std::io;
+use std::io::Read;
 use std::io::Write;
+use std::path::Path;
 use vm::VM;
+use nom::types::CompleteStr;
 use assembler::program_parsers::program;
 
 pub struct REPL {
@@ -33,6 +37,28 @@ impl REPL {
                     for command in &self.command_buffer {
                         println!("{}", command);
                     }
+                },
+                ".load_file" => {
+                    print!("Please enter the path to the file you wish to load: ");
+                    io::stdout().flush().expect("Unable to flush stdout");
+                    let mut tmp = String::new();
+                    stdin.read_line(&mut tmp).expect("Unable to read line from user");
+                    let tmp = tmp.trim();
+                    let filename = Path::new(&tmp);
+                    let mut f = File::open(Path::new(&filename)).expect("File not found");
+                    let mut contents = String::new();
+                    f.read_to_string(&mut contents).expect("There was an error reading from the file");
+                    let program = match program(CompleteStr(&contents)) {
+                        Ok((_, program)) => {
+                            program
+                        },
+                        Err(e) => {
+                            println!("Unable to parse input: {:?}", e);
+                            continue;
+                        }
+                    };
+                    let mut bytes = program.to_bytes();
+                    self.vm.program.append(&mut bytes);
                 },
                 ".program" => {
                     println!("Listing instructions currently in VM's program vector:");

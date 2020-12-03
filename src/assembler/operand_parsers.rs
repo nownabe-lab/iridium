@@ -2,8 +2,16 @@ use nom::types::CompleteStr;
 use nom::digit;
 
 use assembler::Token;
+use assembler::register_parsers::register;
 
-named!(pub integer_operand<CompleteStr, Token>,
+named!(pub operand<CompleteStr, Token>,
+    alt!(
+        integer_operand |
+        register
+    )
+);
+
+named!(integer_operand<CompleteStr, Token>,
     ws!(
         do_parse!(
             tag!("#") >>

@@ -2,15 +2,18 @@ use nom::multispace;
 use nom::types::CompleteStr;
 use assembler::Token;
 use assembler::opcode_parsers::opcode;
-use assembler::operand_parsers::integer_operand;
+use assembler::operand_parsers::operand;
 use assembler::register_parsers::register;
+use assembler::label_parsers::label_declaration;
 
 #[derive(Debug, PartialEq)]
 pub struct AssemblerInstruction {
-    opcode: Token,
-    operand1: Option<Token>,
-    operand2: Option<Token>,
-    operand3: Option<Token>,
+    pub opcode: Option<Token>,
+    pub label: Option<Token>,
+    pub directive: Option<Token>,
+    pub operand1: Option<Token>,
+    pub operand2: Option<Token>,
+    pub operand3: Option<Token>,
 }
 
 named!(pub instruction<CompleteStr, AssemblerInstruction>,
@@ -25,13 +28,35 @@ named!(pub instruction<CompleteStr, AssemblerInstruction>,
     )
 );
 
+named!(instruction_combined<CompleteStr, AssemblerInstruction>,
+    do_parse!(
+        l: opt!(label_declaration) >>
+        o: opcode >>
+        o1: opt!(operand) >>
+        o2: opt!(operand) >>
+        o3: opt!(operand) >>
+        (
+            AssemblerInstruction{
+                opcode: Some(o),
+                label: l,
+                directive: None,
+                operand1: o1,
+                operand2: o2,
+                operand3: o3,
+            }
+        )
+    )
+);
+
 named!(instruction_one<CompleteStr, AssemblerInstruction>,
     do_parse!(
         o: opcode >>
         opt!(multispace) >>
         (
             AssemblerInstruction{
-                opcode: o,
+                opcode: Some(o),
+                label: None,
+                directive: None,
                 operand1: None,
                 operand2: None,
                 operand3: None,
@@ -44,10 +69,12 @@ named!(instruction_two<CompleteStr, AssemblerInstruction>,
     do_parse!(
         o: opcode >>
         r: register >>
-        i: integer_operand >>
+        i: operand >>
         (
             AssemblerInstruction{
-                opcode: o,
+                opcode: Some(o),
+                label: None,
+                directive: None,
                 operand1: Some(r),
                 operand2: Some(i),
                 operand3: None,
@@ -61,7 +88,7 @@ impl AssemblerInstruction {
         let mut results = vec![];
         let ref token = self.opcode;
         match token {
-            Token::Op { code } => match code {
+            Some(Token::Op { code }) => match code {
                 _ => {
                     let b: u8 = (*code).into();
                     results.push(b);
@@ -134,7 +161,9 @@ mod tests {
             Ok((
                 CompleteStr(""),
                 AssemblerInstruction {
-                    opcode: Token::Op { code: Opcode::HLT },
+                    opcode: Some(Token::Op { code: Opcode::HLT }),
+                    label: None,
+                    directive: None,
                     operand1: None,
                     operand2: None,
                     operand3: None,
@@ -151,7 +180,9 @@ mod tests {
             Ok((
                 CompleteStr(""),
                 AssemblerInstruction {
-                    opcode: Token::Op { code: Opcode::LOAD },
+                    opcode: Some(Token::Op { code: Opcode::LOAD }),
+                    label: None,
+                    directive: None,
                     operand1: Some(Token::Register { reg_num: 0 }),
                     operand2: Some(Token::IntegerOperand { value: 100 }),
                     operand3: None,
@@ -163,7 +194,9 @@ mod tests {
     #[test]
     fn test_to_bytes() {
         let instruction = AssemblerInstruction {
-            opcode: Token::Op { code: Opcode::HLT },
+            opcode: Some(Token::Op { code: Opcode::HLT }),
+            label: None,
+            directive: None,
             operand1: None,
             operand2: None,
             operand3: None,
