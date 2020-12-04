@@ -5,7 +5,8 @@ use std::io::Read;
 use std::io::Write;
 use std::path::Path;
 use vm::VM;
-use nom::types::CompleteStr;
+
+use assembler::Assembler;
 use assembler::program_parsers::program;
 
 pub struct REPL {
@@ -48,17 +49,10 @@ impl REPL {
                     let mut f = File::open(Path::new(&filename)).expect("File not found");
                     let mut contents = String::new();
                     f.read_to_string(&mut contents).expect("There was an error reading from the file");
-                    let program = match program(CompleteStr(&contents)) {
-                        Ok((_, program)) => {
-                            program
-                        },
-                        Err(e) => {
-                            println!("Unable to parse input: {:?}", e);
-                            continue;
-                        }
-                    };
-                    let mut bytes = program.to_bytes();
-                    self.vm.program.append(&mut bytes);
+                    let mut asm = Assembler::new();
+                    if let Some(mut bytes) = asm.assemble(&contents) {
+                        self.vm.program.append(&mut bytes);
+                    }
                 },
                 ".program" => {
                     println!("Listing instructions currently in VM's program vector:");
@@ -84,7 +78,8 @@ impl REPL {
                             continue;
                         }
                     };
-                    self.vm.program.append(&mut program.to_bytes());
+                    let asm = Assembler::new();
+                    self.vm.program.append(&mut program.to_bytes(&asm.symbols));
                     self.vm.run_once();
                 }
             }

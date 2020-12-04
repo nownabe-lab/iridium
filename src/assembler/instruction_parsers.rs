@@ -1,5 +1,7 @@
 use nom::multispace;
 use nom::types::CompleteStr;
+
+use assembler::SymbolTable;
 use assembler::Token;
 use assembler::opcode_parsers::opcode;
 use assembler::operand_parsers::operand;
@@ -84,7 +86,7 @@ named!(instruction_two<CompleteStr, AssemblerInstruction>,
 );
 
 impl AssemblerInstruction {
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self, symbols: &SymbolTable) -> Vec<u8> {
         let mut results = vec![];
         let ref token = self.opcode;
         match token {
@@ -99,23 +101,10 @@ impl AssemblerInstruction {
                 std::process::exit(1);
             },
         }
-        /*
-        match self.opcode {
-            Token::Op { code } => match code {
-                _ => {
-                    results.push(code as u8);
-                }
-            },
-            _ => {
-                println!("Non-opcode found in opcode field");
-                std::process::exit(1);
-            },
-        };
-        */
 
         for operand in &[&self.operand1, &self.operand2, &self.operand3] {
             if let Some(token) = operand {
-                AssemblerInstruction::extract_operand(token, &mut results)
+                AssemblerInstruction::extract_operand(token, &mut results, symbols);
             }
         }
 
@@ -123,10 +112,24 @@ impl AssemblerInstruction {
             results.push(0);
         }
 
-        return results;
+        results
     }
 
-    fn extract_operand(t: &Token, results: &mut Vec<u8>) {
+    pub fn is_label(&self) -> bool {
+        self.label.is_some()
+    }
+
+    pub fn get_label_name(&self) -> Option<String> {
+        match &self.label {
+            Some(l) => match l {
+                Token::LabelDeclaration { name } => Some(name.clone()),
+                _ => None,
+            },
+            None => None,
+        }
+    }
+
+    fn extract_operand(t: &Token, results: &mut Vec<u8>, _symbols: &SymbolTable) {
         match t {
             Token::Register { reg_num } => {
                 results.push(*reg_num);
@@ -138,6 +141,7 @@ impl AssemblerInstruction {
                 results.push(byte2 as u8);
                 results.push(byte1 as u8);
             }
+            Token::LabelUsage { name: _ } => {}
             _ => {
                 println!("Opcode found in operand field");
                 std::process::exit(1);
@@ -201,7 +205,8 @@ mod tests {
             operand2: None,
             operand3: None,
         };
-        let result = instruction.to_bytes();
+        let s = SymbolTable::new();
+        let result = instruction.to_bytes(&s);
         assert_eq!(result.len(), 4)
     }
 }

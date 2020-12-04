@@ -25,6 +25,10 @@ impl VM {
         self.program.push(b)
     }
 
+    pub fn add_bytes(&mut self, mut b: Vec<u8>) {
+        self.program.append(&mut b);
+    }
+
     pub fn run(&mut self) {
         let mut is_done = false;
         while !is_done {
