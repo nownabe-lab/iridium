@@ -7,3 +7,4 @@ authors = ["nownabe <nownabe@gmail.com>"]
 
 [dependencies]
 nom = "^4.0"
+clap = { version = "2.32", features = ["yaml"] }

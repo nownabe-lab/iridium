@@ -1,3 +1,5 @@
+use assembler::PIE_HEADER_LENGTH;
+use assembler::PIE_HEADER_PREFIX;
 use instruction::Opcode;
 
 pub struct VM {
@@ -30,6 +32,10 @@ impl VM {
     }
 
     pub fn run(&mut self) {
+        if !self.verify_header() {
+            return;
+        }
+        self.pc = PIE_HEADER_LENGTH;
         let mut is_done = false;
         while !is_done {
             is_done = self.execute_instruction();
@@ -171,6 +177,13 @@ impl VM {
         self.pc += 2;
         return result;
     }
+
+    fn verify_header(&self) -> bool {
+        if self.program[0..4] != PIE_HEADER_PREFIX {
+            return false;
+        }
+        true
+    }
 }
 
 #[cfg(test)]
@@ -187,7 +200,7 @@ mod tests {
     fn test_load_opcode() {
         let mut test_vm = VM::new();
         test_vm.program = vec![0, 0, 1, 244];
-        test_vm.run();
+        test_vm.run_once();
         assert_eq!(test_vm.registers[0], 500);
     }
 
@@ -197,7 +210,7 @@ mod tests {
         test_vm.program = vec![1, 0, 1, 2];
         test_vm.registers[0] = 5;
         test_vm.registers[1] = 10;
-        test_vm.run();
+        test_vm.run_once();
         assert_eq!(test_vm.registers[2], 15);
     }
 
@@ -207,7 +220,7 @@ mod tests {
         test_vm.program = vec![2, 0, 1, 2];
         test_vm.registers[0] = 10;
         test_vm.registers[1] = 5;
-        test_vm.run();
+        test_vm.run_once();
         assert_eq!(test_vm.registers[2], 5);
     }
 
@@ -217,7 +230,7 @@ mod tests {
         test_vm.program = vec![3, 0, 1, 2];
         test_vm.registers[0] = 2;
         test_vm.registers[1] = 3;
-        test_vm.run();
+        test_vm.run_once();
         assert_eq!(test_vm.registers[2], 6);
     }
 
@@ -227,7 +240,7 @@ mod tests {
         test_vm.program = vec![4, 0, 1, 2];
         test_vm.registers[0] = 10;
         test_vm.registers[1] = 3;
-        test_vm.run();
+        test_vm.run_once();
         assert_eq!(test_vm.registers[2], 3);
         assert_eq!(test_vm.remainder, 1);
     }
