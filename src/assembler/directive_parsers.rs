@@ -70,4 +70,23 @@ mod tests {
             }
         );
     }
+
+    #[test]
+    fn test_string_directive() {
+        let result = directive(CompleteStr("test: .asciiz 'Hello'"));
+        assert_eq!(true, result.is_ok());
+        let (leftover, directive) = result.unwrap();
+        assert_eq!(CompleteStr(""), leftover);
+        assert_eq!(
+            AssemblerInstruction {
+                opcode: None,
+                label: Some(Token::LabelDeclaration { name: "test".to_string() }),
+                directive: Some(Token::Directive { name: "asciiz".to_string() }),
+                operand1: Some(Token::IrString { name: "Hello".to_string() }),
+                operand2: None,
+                operand3: None,
+            },
+            directive,
+        );
+    }
 }

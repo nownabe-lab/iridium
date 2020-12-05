@@ -49,3 +49,15 @@ fn test_program_to_bytes() {
     assert_eq!(bytecode.len(), 4);
     println!("{:?}", bytecode);
 }
+
+#[test]
+fn test_complete_program() {
+    let test_program = CompleteStr(r"
+        .data
+        hello: .asciiz 'Hello everyone!'
+        .code
+        hlt
+    ");
+    let result = program(test_program);
+    assert_eq!(result.is_ok(), true);
+}

@@ -50,7 +50,7 @@ impl REPL {
                     let mut contents = String::new();
                     f.read_to_string(&mut contents).expect("There was an error reading from the file");
                     let mut asm = Assembler::new();
-                    if let Some(mut bytes) = asm.assemble(&contents) {
+                    if let Ok(mut bytes) = asm.assemble(&contents) {
                         self.vm.program.append(&mut bytes);
                     }
                 },

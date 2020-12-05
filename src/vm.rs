@@ -9,6 +9,7 @@ pub struct VM {
     heap: Vec<u8>,
     remainder: u32,
     equal_flag: bool,
+    ro_data: Vec<u8>,
 }
 
 impl VM {
@@ -20,6 +21,7 @@ impl VM {
             pc: 0,
             remainder: 0,
             equal_flag: false,
+            ro_data: vec![],
         }
     }
 
@@ -151,6 +153,20 @@ impl VM {
             Opcode::DEC => {
                 self.registers[self.next_8_bits() as usize] -= 1;
                 self.next_16_bits();
+            },
+            Opcode::PRTS => {
+                let starting_offset = self.next_16_bits() as usize;
+                let mut ending_offset = starting_offset;
+                let slice = self.ro_data.as_slice();
+                while slice[ending_offset] != 0 {
+                    ending_offset += 1;
+                }
+                let result = std::str::from_utf8(&slice[starting_offset..ending_offset]);
+                match result {
+                    Ok(s) => { print!("{}", s); }
+                    Err(e) => { println!("Error decoding string for prts instruction:: {:#?}", e) }
+                };
+                self.next_8_bits();
             },
             Opcode::IGL => {
                 println!("Unrecognized opcode found! Terminating!");
@@ -481,6 +497,16 @@ mod tests {
         vm.run_once();
         assert_eq!(vm.registers[0], 2);
         assert_eq!(vm.pc, 4);
+    }
+
+    #[test]
+    fn test_prts_opcode() {
+        let op = 21;
+
+        let mut vm = VM::new();
+        vm.program = vec![op, 0, 0, 0];
+        vm.ro_data.append(&mut vec![72, 101, 108, 108, 111, 0]);
+        vm.run_once();
     }
 
     #[test]
