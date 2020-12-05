@@ -21,8 +21,7 @@ pub struct AssemblerInstruction {
 named!(pub instruction<CompleteStr, AssemblerInstruction>,
     do_parse!(
         ins: alt!(
-            instruction_two |
-            instruction_one
+            instruction_combined
         ) >>
         (
             ins
@@ -31,21 +30,23 @@ named!(pub instruction<CompleteStr, AssemblerInstruction>,
 );
 
 named!(instruction_combined<CompleteStr, AssemblerInstruction>,
-    do_parse!(
-        l: opt!(label_declaration) >>
-        o: opcode >>
-        o1: opt!(operand) >>
-        o2: opt!(operand) >>
-        o3: opt!(operand) >>
-        (
-            AssemblerInstruction{
-                opcode: Some(o),
-                label: l,
-                directive: None,
-                operand1: o1,
-                operand2: o2,
-                operand3: o3,
-            }
+    ws!(
+        do_parse!(
+            l: opt!(label_declaration) >>
+            o: opcode >>
+            o1: opt!(operand) >>
+            o2: opt!(operand) >>
+            o3: opt!(operand) >>
+            (
+                AssemblerInstruction{
+                    opcode: Some(o),
+                    label: l,
+                    directive: None,
+                    operand1: o1,
+                    operand2: o2,
+                    operand3: o3,
+                }
+            )
         )
     )
 );

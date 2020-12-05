@@ -1,4 +1,6 @@
 use nom::types::CompleteStr;
+
+use assembler::directive_parsers::directive;
 use assembler::instruction_parsers::{AssemblerInstruction, instruction};
 use assembler::SymbolTable;
 
@@ -19,7 +21,7 @@ impl Program {
 
 named!(pub program<CompleteStr, Program>,
     do_parse!(
-        instructions: many1!(instruction) >>
+        instructions: many1!(alt!(instruction | directive)) >>
         (
             Program {
                 instructions: instructions,
@@ -34,10 +36,7 @@ fn test_parse_program() {
     assert_eq!(result.is_ok(), true);
     let (leftover, p) = result.unwrap();
     assert_eq!(leftover, CompleteStr(""));
-    assert_eq!(
-        1,
-        p.instructions.len()
-    );
+    assert_eq!(1, p.instructions.len());
 }
 
 #[test]

@@ -3,6 +3,7 @@ use nom::types::CompleteStr;
 
 use assembler::Token;
 use assembler::instruction_parsers::AssemblerInstruction;
+use assembler::label_parsers::label_declaration;
 use assembler::operand_parsers::operand;
 
 named!(directive_declaration<CompleteStr, Token>,
@@ -18,6 +19,7 @@ named!(directive_declaration<CompleteStr, Token>,
 named!(directive_combined<CompleteStr, AssemblerInstruction>,
     ws!(
         do_parse!(
+            l: opt!(label_declaration) >>
             name: directive_declaration >>
             o1: opt!(operand) >>
             o2: opt!(operand) >>
@@ -26,7 +28,7 @@ named!(directive_combined<CompleteStr, AssemblerInstruction>,
                 AssemblerInstruction{
                     opcode: None,
                     directive: Some(name),
-                    label: None,
+                    label: l,
                     operand1: o1,
                     operand2: o2,
                     operand3: o3,

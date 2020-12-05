@@ -2,11 +2,13 @@ use nom::types::CompleteStr;
 use nom::digit;
 
 use assembler::Token;
+use assembler::label_parsers::label_usage;
 use assembler::register_parsers::register;
 
 named!(pub operand<CompleteStr, Token>,
     alt!(
         integer_operand |
+        label_usage |
         register
     )
 );

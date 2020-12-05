@@ -13,7 +13,7 @@ pub mod program_parsers;
 pub mod label_parsers;
 pub mod directive_parsers;
 
-pub const PIE_HEADER_PREFIX: [u8; 4] = [45, 50, 49, 45];
+pub const PIE_HEADER_PREFIX: [u8; 4] = [0x45, 0x50, 0x49, 0x45];
 pub const PIE_HEADER_LENGTH: usize = 64;
 
 #[derive(Debug, PartialEq)]
@@ -98,35 +98,42 @@ impl Assembler {
         for byte in PIE_HEADER_PREFIX.iter() {
             header.push(byte.clone());
         }
-        while header.len() <= PIE_HEADER_LENGTH {
-            header.push(0 as u8);
+        while header.len() < PIE_HEADER_LENGTH {
+            header.push(0);
         }
         header
     }
 }
 
-/*
-#[test]
-fn test_assemble_program() {
-    let mut asm = Assembler::new();
-    let test_string = r"
-        load $0 #100
-        load $1 #1
-        load $2 #0
-        test: inc $0
-        neq $0 $2
-        jmpe @test
-        hlt
-        ";
-    let program = asm.assemble(test_string).unwrap();
-    println!("{:?}", program);
-    assert_eq!(program.len(), 28);
+mod tests {
+    #![allow(unused_imports)]
 
-    let mut vm = VM::new();
-    vm.add_bytes(program);
-    assert_eq!(vm.program.len(), 28);
+    use super::Assembler;
+    use super::PIE_HEADER_LENGTH;
+    use vm::VM;
+
+    #[test]
+    fn test_assemble_program() {
+        let mut asm = Assembler::new();
+        let test_string = r"
+            load $0 #100
+            load $1 #1
+            load $2 #0
+            test: inc $0
+            neq $0 $2
+            jmpe @test
+            hlt
+        ";
+        let result = asm.assemble(test_string);
+        assert_eq!(result.is_some(), true);
+        let program = result.unwrap();
+        assert_eq!(program.len(), 28 + PIE_HEADER_LENGTH);
+
+        let mut vm = VM::new();
+        vm.add_bytes(program);
+        assert_eq!(vm.program.len(), 28 + PIE_HEADER_LENGTH);
+    }
 }
-*/
 
 #[derive(Debug)]
 pub struct Symbol {
